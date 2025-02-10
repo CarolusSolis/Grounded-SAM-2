@@ -145,3 +145,5 @@ dmypy.json
 outputs/
 
 .idea/
+custom_video_frames/
+tracking_results/
