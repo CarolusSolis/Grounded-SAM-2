@@ -22,18 +22,20 @@ parser = argparse.ArgumentParser(description='Video object segmentation')
 parser.add_argument('--object_name', help='Name of the object to track', default="AngryOrchard")
 parser.add_argument('--camera_id', help='ID of the camera', default="camera_1")
 parser.add_argument('--text_prompt', help='Text prompt for object detection', default="Angry Orchard.")
+parser.add_argument('--gd_model_id', help='Grounding DINO model ID', default="IDEA-Research/grounding-dino-tiny")
+parser.add_argument('--sam2_checkpoint', help='SAM2 checkpoint filename (e.g. sam2.1_hiera_large.pt)', default="sam2.1_hiera_large.pt")
+parser.add_argument('--sam2_model_config', help='SAM2 model config filename (e.g. sam2.1_hiera_l.yaml)', default="sam2.1_hiera_l.yaml")
 args = parser.parse_args()
 
 OBJECT_FILE_NAME = args.object_name
 CAMERA_ID = args.camera_id
-MODEL_ID = "IDEA-Research/grounding-dino-tiny"
+MODEL_ID = args.gd_model_id
 VIDEO_PATH = Path("../videos") / OBJECT_FILE_NAME / (CAMERA_ID + ".mp4") # e.g. ../videos/AngryOrchard/camera_1.mp4
 TEXT_PROMPT = args.text_prompt
 OUTPUT_DIR = Path("../outputs") / OBJECT_FILE_NAME / CAMERA_ID
 OUTPUT_VIDEO_PATH = OUTPUT_DIR / ("tracking_demo.mp4")
 SOURCE_VIDEO_FRAME_DIR = "./custom_video_frames"  # this is an intermediate generated in this script itself, it doesn't have to exist already
 SAVE_TRACKING_RESULTS_DIR = "./tracking_results"  # this is an intermediate generated in this script itself, it doesn't have to exist already
-OUTPUT_OBJECT_ONLY_DIR = OUTPUT_DIR / ("object_only_video")    # e.g. ../outputs/AngryOrchard/camera_1_object_only_video
 OUTPUT_OBJECT_ONLY_FRAMES_DIR = OUTPUT_DIR / ("object_only_frames")    # e.g. ../outputs/AngryOrchard/camera_1_object_only_frames
 PROMPT_TYPE_FOR_VIDEO = "box" # choose from ["point", "box", "mask"]
 
@@ -49,8 +51,8 @@ if torch.cuda.get_device_properties(0).major >= 8:
     torch.backends.cudnn.allow_tf32 = True
 
 # init sam image predictor and video predictor model
-sam2_checkpoint = "./checkpoints/sam2.1_hiera_large.pt"
-model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
+sam2_checkpoint = "./checkpoints/" + args.sam2_checkpoint
+model_cfg = "configs/sam2.1/" + args.sam2_model_config
 
 video_predictor = build_sam2_video_predictor(model_cfg, sam2_checkpoint)
 sam2_image_model = build_sam2(model_cfg, sam2_checkpoint)
@@ -239,4 +241,4 @@ Step 6: Convert the annotated frames to video
 """
 
 create_video_from_images(SAVE_TRACKING_RESULTS_DIR, OUTPUT_VIDEO_PATH)
-create_video_from_images(OUTPUT_OBJECT_ONLY_FRAMES_DIR, os.path.join(OUTPUT_OBJECT_ONLY_DIR, "object_only_video.mp4"))
+create_video_from_images(OUTPUT_OBJECT_ONLY_FRAMES_DIR, os.path.join(OUTPUT_DIR, "object_only_video.mp4"))
